@@ -14,7 +14,7 @@ from sklearn.metrics import (
 from imblearn.over_sampling import RandomOverSampler
 import seaborn as sns
 import matplotlib.pyplot as plt
-import shap
+# import shap
 
 base = "result1"
 
@@ -57,6 +57,7 @@ classifier = VotingClassifier(
 classifier.fit(X_train_std_s, y_train_s)
 
 y_pred = classifier.predict(X_test_std)
+y_proba = classifier.predict_proba(X_test_std)
 
 ids_test_0_0 = ids_test[(y_test == "ntb") & (y_pred == "ntb")]
 ids_test_0_1 = ids_test[(y_test == "ntb") & (y_pred == "ntm")]
@@ -135,12 +136,20 @@ def result_row(row):
 
 ori['result'] = ori.apply(lambda row: result_row(row), axis=1)
 
+ori["proba_ntb"] = '-'
+ori["proba_ntm"] = '-'
+ori["proba_tb"] = '-'
+
+for idx, test_id in enumerate(ids_test):
+    ori.loc[test_id, 'proba_ntb'] = y_proba[idx][0]
+    ori.loc[test_id, 'proba_ntm'] = y_proba[idx][1]
+    ori.loc[test_id, 'proba_tb'] = y_proba[idx][2]
+
 ori.to_csv(f"data/{base}/result.csv", index=False)
 
-explainer = shap.KernelExplainer(classifier.predict_proba, X_train_std_s)
-shap_values = explainer.shap_values(X_test_std, nsamples=100)
-
-shap.initjs()
-shap.summary_plot(shap_values[1], X_test_std, show=False)
-plt.savefig(f"data/{base}/shap", dpi=300)
-plt.close()
+# explainer = shap.KernelExplainer(classifier.predict_proba, X_train_std_s)
+# shap_values = explainer.shap_values(X_test_std, nsamples=100)
+# shap.initjs()
+# shap.summary_plot(shap_values[1], X_test_std, show=False)
+# plt.savefig(f"data/{base}/shap", dpi=300)
+# plt.close()
